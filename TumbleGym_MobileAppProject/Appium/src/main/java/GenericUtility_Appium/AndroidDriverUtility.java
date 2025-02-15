@@ -4,12 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Set;
-
+import io.appium.java_client.android.Activity;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.nativekey.AndroidKey;
 import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.remote.MobileBrowserType;
-
+import java.util.Map;
+import java.util.HashMap;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -20,7 +21,7 @@ import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import com.google.common.collect.ImmutableMap;
-
+import io.appium.java_client.android.AndroidDriver;
 import Hello_Bff_GenericUtility.JavaUtility;
 import io.appium.java_client.Location;
 import io.appium.java_client.MultiTouchAction;
@@ -230,7 +231,7 @@ public class AndroidDriverUtility {
 	/*
 	 * Handling App Installation
 	 */
-	public void installApp(String apkPath) {
+	public void installApp(AndroidDriver driver, String apkPath) {
 		driver.installApp(apkPath);
 	}
 
@@ -341,5 +342,139 @@ public class AndroidDriverUtility {
 			System.out.println("Error: Unable to click the element. " + e.getMessage());
 			return false; // Failed to click
 		}
+	}
+
+	/*
+	 * Wait for element to be presence
+	 * 
+	 */
+	public static void waitForElementPresence(AndroidDriver driver, By locator) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+		wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+	}
+	/*
+	 * Get Current Activity and Package Useful for debugging or verifying the
+	 * correct app state.
+	 */
+
+	public String getCurrentActivity() {
+		return driver.currentActivity();
+	}
+
+	/*
+	 * Get Current Activity and Package Useful for debugging or verifying the
+	 * correct app state.
+	 */
+
+	public String getCurrentPackage() {
+		return driver.getCurrentPackage();
+	}
+	/*
+	 * Check if an App is Installed
+	 */
+
+	public boolean isAppInstalled(String packageName) {
+		return driver.isAppInstalled(packageName);
+	}
+
+	/*
+	 * Background App for a Certain Time
+	 * 
+	 */
+	public void backgroundApp(int seconds) {
+		driver.runAppInBackground(Duration.ofSeconds(seconds));
+	}
+	/*
+	 * Check if Keyboard is Shown Prevents redundant hide keyboard calls
+	 */
+
+	public boolean isKeyboardShown() {
+		return driver.isKeyboardShown();
+	}
+
+	/*
+	 * Double Tap Gesture Useful for interactions like zooming in or selecting.
+	 */
+	public void doubleTap(WebElement element) {
+		new TouchAction<>(driver)
+				.tap(TapOptions.tapOptions().withElement(ElementOption.element(element)).withTapsCount(2)).perform();
+	}
+
+	/*
+	 * Swipe Element into View Ensures visibility before interacting.
+	 */
+
+	public void swipeElementIntoView(WebElement element) {
+		((JavascriptExecutor) driver).executeScript("mobile: scroll",
+				ImmutableMap.of("element", ((RemoteWebElement) element).getId(), "toVisible", true));
+	}
+
+	/*
+	 * Get Device Time Useful for logging and debugging.
+	 * 
+	 */
+	public String getDeviceTime() {
+		return driver.getDeviceTime();
+	}
+
+	/*
+	 * Check If an Element is Displayed Helps avoid NoSuchElementException.
+	 */
+
+	public boolean isElementDisplayed(WebElement element) {
+		try {
+			return element.isDisplayed();
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	/*
+	 * Scroll to Bottom of the Screen
+	 */
+
+	public void scrollToBottom() {
+		((JavascriptExecutor) driver).executeScript("mobile: scroll", ImmutableMap.of("direction", "down"));
+	}
+
+	/*
+	 * Capture Logs
+	 */
+	public void captureLogs(String logType) {
+		System.out.println(driver.manage().logs().get(logType).getAll());
+	}
+
+	/*
+	 * Wait for Specific Text on Screen
+	 * 
+	 */
+	public boolean waitForTextToAppear(String text, int timeoutInSeconds) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds));
+		return wait.until(ExpectedConditions
+				.textToBePresentInElementLocated(By.xpath("//*[contains(text(),'" + text + "')]"), text));
+	}
+
+	/*
+	 * Perform Backspace in a Text Field
+	 * 
+	 * 
+	 */
+	public void clearTextField(WebElement element) {
+		element.clear();
+		for (int i = 0; i < 10; i++) {
+			driver.pressKey(new KeyEvent(AndroidKey.DEL));
+		}
+	}
+
+	/*
+	 * launchApp
+	 * 
+	 */
+	public void launchApp(AndroidDriver driver, String packageName) {
+		driver.activateApp(packageName);
+	}
+
+	public void restartApp(AndroidDriver driver, String packageName) {
+		driver.terminateApp(packageName);
+		driver.activateApp(packageName);
 	}
 }

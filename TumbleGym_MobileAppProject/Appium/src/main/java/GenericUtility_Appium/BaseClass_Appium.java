@@ -9,8 +9,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+
 import Hello_Bff_GenericUtility.ExcelUtility;
 import Hello_Bff_GenericUtility.FileUtility;
 import Hello_Bff_GenericUtility.JavaUtility;
@@ -18,6 +21,8 @@ import Hello_Bff_GenericUtility.WebDriverUtility;
 import ObjectRepository_Appium.Android_LoginPage;
 import ObjectRepository_Appium.Android_LogoutPage;
 import java.lang.reflect.Method;
+
+import io.appium.java_client.android.Activity;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
@@ -37,10 +42,17 @@ public class BaseClass_Appium {
 	public ExcelUtility eutil = new ExcelUtility();
 	public JavaUtility jutil = new JavaUtility();
 	public WebDriverUtility wutil = new WebDriverUtility();
+	public AndroidDriverUtility autil = new AndroidDriverUtility();
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
 	public @interface OpenBrowser {
+	}
+
+	@BeforeTest
+	public void beforeTest() throws IOException, InterruptedException {
+		EmulatorUtility.startEmulator(); // Start emulator before tests
+		System.out.println("✅ Emulator started successfully!");
 	}
 
 	@BeforeClass
@@ -63,6 +75,11 @@ public class BaseClass_Appium {
 		options.setApp(absoluteFileAppPath);
 
 		androidDriver = new AndroidDriver(new URL(AppiumServerURL), options);
+		autil.installApp(androidDriver, absoluteFileAppPath);
+		// AndroidDriverUtility.openApp(androidDriver, "com.example.hrms",
+		// "com.example.hrms.MainActivity");
+
+		Thread.sleep(2000);
 		androidDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(wait1));
 
 		Android_LoginPage alp = new Android_LoginPage(androidDriver);
@@ -118,34 +135,13 @@ public class BaseClass_Appium {
 		service.stop();
 	}
 
-	protected boolean shouldOpenBrowser(Method method) {
-		return method.isAnnotationPresent(OpenBrowser.class);
+	@AfterTest
+	public void afterTest() throws IOException, InterruptedException {
+		EmulatorUtility.closeEmulator(); // Stop the emulator after tests
 	}
 
-//	private boolean isEmulatorRunning() throws IOException {
-//		process = Runtime.getRuntime().exec("adb devices");
-//		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//		String line;
-//		while ((line = reader.readLine()) != null) {
-//			if (line.contains("emulator")) {
-//				return true;
-//			}
-//		}
-//		return false;
-//	}
-	public static void startEmulator() {
-		String emulatorFolderPath = "C:\\Users\\Sudarshan\\AppData\\Local\\Android\\Sdk\\emulator";
-		String emulatorName = "6Pro";
-		try {
-			// Change the working directory
-			String changeDirCommand = emulatorFolderPath;
-			Runtime.getRuntime().exec(changeDirCommand);
-			// Start the emulator
-			String emulatorCommand = "emulator -avd " + emulatorName;
-			Runtime.getRuntime().exec(emulatorCommand);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	protected boolean shouldOpenBrowser(Method method) {
+		return method.isAnnotationPresent(OpenBrowser.class);
 	}
 
 	public AndroidDriver getAndroidDriver() {
